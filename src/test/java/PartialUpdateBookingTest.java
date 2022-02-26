@@ -64,9 +64,9 @@ public class PartialUpdateBookingTest {
     }
 
     @Test
-    public void verifyUnsuccessfulPartialUpdateBookingDueToInvalidRequestFormat () {
+    public void verifyUnsuccessfulPartialUpdateBookingWithInvalidRequest () {
         Response response = sendPatchRequestAndFetchResponse(buildPartialUpdateRequestWithInvalidFormat());
-        Assert.assertEquals("Invalid request format..",HttpStatus.SC_BAD_REQUEST,response.getStatusCode());
+        Assert.assertEquals("Invalid request format.",HttpStatus.SC_BAD_REQUEST,response.getStatusCode());
     }
 
     @Test @SneakyThrows
@@ -84,6 +84,24 @@ public class PartialUpdateBookingTest {
                 .extract().response();
         Assert.assertEquals("Partial Booking Update forbidden for unauthorized user",
                 HttpStatus.SC_FORBIDDEN,response.getStatusCode());
+    }
+
+    @Test @SneakyThrows
+    public void verifyPartialUpdateBookingWithIncorrectAcceptHeader () {
+        Number bookingId = CreateBookingApi.createBooking();
+        String authToken = AuthTokenApi.getAuthToken();
+        Response response = given()
+                .header("Content-Type", "application/json")
+                .header("Accept","test")
+                .header("Cookie","token=" +authToken)
+                .and()
+                .body(buildPartialUpdateRequestWithNameDetails())
+                .when()
+                .patch(BOOKING_ENDPOINT +"/" +bookingId)
+                .then()
+                .extract().response();
+        Assert.assertEquals("Partial Booking Update failed for incorrect accept header." +
+                        "Internal Server Error", HttpStatus.SC_INTERNAL_SERVER_ERROR,response.getStatusCode());
     }
 
     @SneakyThrows
